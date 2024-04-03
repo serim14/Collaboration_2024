@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width; initial-scale=1">
+  
+  <title>자유로운 잡담</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script defer src="/util/face-api.min.js"></script>
+  <script defer src="/util/emotion.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+  
+<body>
+
+  <div class="full_screen">
+    <div class="top_screen">
+      <iframe frameborder="0" height="100%" width="100%"
+          src="https://www.youtube.com/embed/1Q8584Buz7M">
+      </iframe>
+    </div>
+    
+    <div class="left_screen">
+      <h3>ICE BREAKER</h3>
+      <div class="notification">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;
+          <strong>Notification</strong> ****  24. 4. 2. 따뜻하고 햇날 좋은 날 여러분들을 환영합니다. <br / >
+        </span> 
+      </div>
+
+      <div class="notification">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;
+          <strong>Notification</strong> ****  24. 4. 2. LMS 에서 수업자료 다운받아서 준비해주세요. <br / > 
+        </span> 
+      </div>
+  
+
+      <div id="chatContent"></div>
+  
+      <form class="form_text">
+          <input type="text" id="myChat" placeholder="어떤 얘기여도 좋습니다!">
+          <button type="submit" id="btn-primary">Send Text</button>
+      </form>
+  
+      <form class="form_image">
+        <div class="button">
+          <label for="fileInput">
+            <input type="file" id="fileInput">
+          </label>
+        <button type="submit" id="btn-primary-image">Send Image</button>
+        </div>
+      </form>
+ 
+    </div>
+    
+    <div class="right_screen">
+      <div class="container">
+        <div id="video-container" class="video-container">
+          <video id="video" autoplay muted width="90%" height="100%"></video>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script>
+  $(function(){
+    // socket.io 서버에 접속한다
+    var socket = io();
+    // 서버로 자신의 정보를 전송한다.
+    socket.emit("login", {
+      name: makeRandomName()
+    });
+
+    // 서버로부터의 로그인 메시지가 수신되면
+    socket.on("login", function(data) {
+        var msgLine = $('<div class="msgLine">');
+		    var msgBox = $('<div class="msgBox_login">');
+		    msgBox.append("<strong>" + data.name + "</strong> 님이 채팅방에 참여하였습니다 " + data.enter_time);
+        msgBox.css('display', 'inline-block');
+        msgLine.append(msgBox);
+        $('#chatContent').append(msgLine);
+		    updateScroll();
+    });
+
+    // 서버로부터의 메시지가 수신되면
+    socket.on("chat", function(data) {
+         var uniqueTime = new Date(data.msg_time).getTime() / 10000;
+         unixTime = Math.floor(uniqueTime)
+         var msgLine = $('<div class="msgLine">');
+		     var msgBox = $('<div class="msgBox" id = ' + unixTime+ ">");
+         msgBox.append(data.msg +'<div class="msgBox_from_and_time">' + "(From. "+  data.name + "학생)" + " " + data.msg_time)
+        //  msgBox.append('<div onclick="like()"' + '>like </div>') 
+         msgBox.css('display', 'inline-block');
+         msgLine.append(msgBox);
+         $('#chatContent').append(msgLine);
+         updateScroll();
+
+    });
+
+
+    // 서버로부터의 이미지가 수신되면
+    socket.on("base64", function(data) {
+        var imageContainer = $("#chatContent");
+        var msgLine = $('<div class="msgLine">');
+		    var msgBox = $('<div class="msgBox">');
+        msgBox.append('<div class="msgBox_from_and_time">' + "(From. " + data.name + "학생)" + " " + data.msg_time)
+        var img = $("<img>");
+        var img_type = base64FileHeaderMapper(data.msg)
+        img.attr("src", 'data:img/' + img_type +';base64,'+ data.msg);
+        
+        msgBox.append(img)
+        msgBox.css('display', 'inline-block');
+        msgLine.append(msgBox);
+        imageContainer.append(msgLine);
+        updateScroll();
+      });
+
+    // 좋아요 업데이트가 수신되면   
+    socket.on("update", function(data){
+      
+
+    });
+
+
+    // Send 이미지 버튼이 클릭되면
+    $(".form_image").submit(function(e) {
+      e.preventDefault();
+        var fileInput = $("#fileInput");
+        var file = fileInput[0].files[0];
+        var reader = new FileReader();
+        reader.onload = function(event) {
+          var imageSrc = event.target.result;
+          var base64Image = imageSrc.split(",")[1];
+          socket.emit('base64', { base64 : base64Image});
+          
+          var msgLine = $('<div class="msgLine">');
+          var msgBox = $('<div class="msgBox_mychat">');
+          var img = $("<img>");
+          img.attr("src", "data:img/png;base64,"+base64Image);
+          msgBox.append(img)
+          msgBox.css('display', 'inline-block');
+          msgBox.css('max-width', '100%');
+          msgBox.css('height', 'auto');
+          msgBox.css('width', 'auto');
+          
+          msgLine.css('text-align', 'right');
+          msgLine.append(msgBox);
+          $('#chatContent').append(msgLine);
+          $fileInput.val("");
+        };
+        reader.readAsDataURL(file);
+        updateScroll();
+      
+      });
+    
+    // Send 버튼이 클릭되면
+    $(".form_text").submit(function(e) {
+      e.preventDefault();
+      // 서버로 메시지를 전송한다.
+      var $myChat = $("#myChat");
+      socket.emit("chat", { msg: $myChat.val() });
+      var msgLine = $('<div class="msgLine">');
+      var msgBox = $('<div class="msgBox_mychat">');
+      msgBox.append($myChat.val());
+      msgBox.css('display', 'inline-block');
+      msgLine.css('text-align', 'right');
+      msgLine.append(msgBox);
+      $('#chatContent').append(msgLine);
+      $myChat.val("");
+      updateScroll();
+    });
+
+
+   
+    function makeRandomName(){
+      var name = "";
+      var possible = "abcdefghijklmnopqrstuvwxyz";
+      for( var i = 0; i < 3; i++ ) {
+        name += possible.charAt(Math.floor(Math.random() * possible.length));
+      }
+      return name;
+    }
+    function base64FileHeaderMapper(fileBase64) {
+
+      let fileHeader = new Map();
+      //get the first 3 char of base64
+      fileHeader.set("/9j", "jpg")
+      fileHeader.set("iVB", "png")
+      fileHeader.set("Qk0", "bmp")
+      fileHeader.set("SUk", "tiff")
+      fileHeader.set("JVB", "pdf")
+      fileHeader.set("UEs", "ofd")
+
+      let res = ""
+
+      fileHeader.forEach((v, k) => {
+          if (k == fileBase64.substr(0, 3)) {
+              res = v
+          }
+      })
+
+      //if file is not supported
+      if (res == "") {
+          res = "unknown file"
+      }
+      //return map value
+      return res;
+  }
+
+  });
+  </script>
+</body>
+</html>

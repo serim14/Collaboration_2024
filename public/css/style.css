@@ -1,0 +1,148 @@
+@import url(//fonts.googleapis.com/earlyaccess/jejugothic.css);
+
+* {
+    box-sizing: border-box;
+}
+
+.video-container {
+    position: fixed;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.fullscreen {
+    width : 100%;
+    height : 100%;
+}
+
+.top_screen {
+    width : 100%;
+    height : 10%;
+    padding-bottom: 30px;
+}
+
+.left_screen {
+    width: 80%;
+    height : 100%;
+    float : left;
+    padding-left : 10px;
+}
+
+.right_screen {
+    width : 20%;
+    height : 100%;
+    float : right;
+}
+
+
+.msgLine {
+    margin: 10px;
+}
+
+.msgBox {
+    border: 1px solid rgb(255, 255, 255);
+    background: rgb(183, 239, 0);
+    font-family: 'Jeju Gothic', sans-serif;
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+
+.msgBox_login {
+    background: rgb(238, 243, 224);
+    font-family: 'Jeju Gothic', sans-serif;
+    font-size : 10px;
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+.msgBox_mychat {
+    border: 1px solid black;
+    background: rgb(50, 123, 247);
+    font-family: 'Jeju Gothic', sans-serif;
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+
+
+.msgBox_from_and_time {
+    color :rgb(66, 174, 135);
+    font-family: 'Jeju Gothic', sans-serif;
+    font-size : 6px;
+}
+input[type=text]:focus {
+    font-size : 110%
+}
+.msgBox img{
+    margin-left : 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width : 60%;
+    height : 60%;
+}
+.notification {
+    font-family: 'Jeju Gothic', sans-serif;
+    padding: 2px 5px;
+}
+.form_image {
+    width: 100%;
+    table-layout: fixed;
+    float: left;
+}
+
+.notification {
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #a5ffc4;
+    color: rgb(0, 0, 0);
+    margin-bottom: 10px;
+  }
+  
+
+#chatContent {
+    border: 1px solid #000;
+    width: 100%;
+    height: 100%;
+    margin-bottom: 10px;
+    overflow-y: auto;
+}
+
+#msg, #myChat{
+    width: 82%;
+    height: 32px;
+    border-radius: 8px;
+}
+
+#btn-primary {
+    width: 16%;
+    height: 34px;
+    border-radius: 50px;
+    background: black;
+    color: white;
+    float : right;
+    font-size: 1.2vw;
+}
+
+#chatContent {
+    border-radius: 5px;
+}
+
+
+#fileInput{
+    display: inline-block;
+    width: 70%;
+    height: 32px;    
+}
+
+#btn-primary-image{
+    display: inline-block;
+    width: 16%;
+    height: 34px;
+    border-radius: 50px;
+    font-size: 1.2vw;
+    background: rgb(72, 182, 222);
+    color: rgb(255, 255, 255);
+    
+}
