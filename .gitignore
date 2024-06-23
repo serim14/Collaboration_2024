@@ -155,3 +155,8 @@ thumb
 sketch
 
 # End of https://www.toptal.com/developers/gitignore/api/node,react
+
+.package-lock.json
+.package.json
+package.json
+package-lock.json
