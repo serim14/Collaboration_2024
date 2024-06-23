@@ -55,7 +55,7 @@ body {
 
 .notification {
     background-color: #ffffff;
-    border-left: 4px solid #0064FF;
+    border-left: 4px solid #0064ff;
     padding: 15px;
     border-radius: 5px;
     margin-bottom: 10px;
@@ -78,7 +78,8 @@ body {
     color: #666;
 }
 
-.form_text, .form_image {
+.form_text,
+.form_image {
     display: flex;
     align-items: center;
     margin-top: 10px;
@@ -92,8 +93,8 @@ body {
     border-radius: 20px;
 }
 
-input[type=text]:focus {
-    border-color: #0064FF;
+input[type='text']:focus {
+    border-color: #0064ff;
 }
 
 .form_image .input-group {
@@ -142,8 +143,8 @@ input[type=text]:focus {
 }
 
 .msgBox_mychat {
-    border: 1px solid #0064FF;
-    background: #0064FF;
+    border: 1px solid #0064ff;
+    background: #0064ff;
     color: #fff;
     padding: 10px;
     border-radius: 20px;
@@ -165,8 +166,8 @@ input[type=text]:focus {
 }
 
 .btn-primary {
-    background-color: #0064FF;
-    border-color: #0064FF;
+    background-color: #0064ff;
+    border-color: #0064ff;
     border-radius: 20px;
 }
 
@@ -177,4 +178,15 @@ input[type=text]:focus {
 
 #imagePreviewContainer {
     text-align: center;
+}
+
+.like-btn,
+.dislike-btn {
+    cursor: pointer;
+    color: blue;
+    margin: 0 5px;
+}
+.like-btn:hover,
+.dislike-btn:hover {
+    color: darkblue;
 }
