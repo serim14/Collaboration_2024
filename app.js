@@ -13,6 +13,8 @@ app.get('/', function (req, res) {
 const express = require('express');
 app.use(express.static('public'));
 
+let messages = [];
+
 // connection event handler
 // connection이 수립되면 event handler function의 인자로 socket인 들어온다
 io.on('connection', function (socket) {

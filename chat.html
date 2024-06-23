@@ -22,6 +22,19 @@
         <script defer src="/util/emotion.js"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css" />
     </head>
+  <div class="fullscreen">
+    <div class="top_screen">
+      <iframe frameborder="0" height="100%" width="100%"
+          src="https://www.youtube.com/embed/1Q8584Buz7M">
+      </iframe>
+    </div>
+    
+    <div class="main_content">
+      <div class="left_screen">
+        <div class="notification">
+          <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+          <strong>Notification</strong>  24. 4. 2. 따뜻하고 햇날 좋은 날 여러분들을 환영합니다. <br /> 
+        </div>
 
     <body>
         <div class="fullscreen">
@@ -220,6 +233,38 @@
                         'src',
                         'data:img/' + img_type + ';base64,' + data.msg
                     );
+    // Send 이미지 버튼이 클릭되면
+    $(".form_image").submit(function(e) {
+      e.preventDefault();
+        var fileInput = $("#fileInput");
+        var file = fileInput[0].files[0];
+        var reader = new FileReader();
+        reader.onload = function(event) {
+          var imageSrc = event.target.result;
+          resizeImage(imageSrc, 300, 300, function(resizedImage) {
+            var base64Image = resizedImage.split(",")[1];
+            socket.emit('base64', { base64 : base64Image});
+            
+            var msgLine = $('<div class="msgLine">');
+            var msgBox = $('<div class="msgBox_mychat">');
+            var img = $("<img>");
+            img.attr("src", resizedImage);
+            msgBox.append(img);
+            msgBox.css('display', 'inline-block');
+            msgBox.css('max-width', '100%');
+            msgBox.css('height', 'auto');
+            msgBox.css('width', 'auto');
+            
+            msgLine.css('text-align', 'right');
+            msgLine.append(msgBox);
+            $('#chatContent').append(msgLine);
+            $("#fileInput").val("");
+            $("#imagePreview").hide();
+          });
+        };
+        reader.readAsDataURL(file);
+        updateScroll();
+      });
 
                     msgBox.append(img);
                     msgBox.css('display', 'inline-block');
@@ -432,7 +477,27 @@
                     var element = document.getElementById('chatContent');
                     element.scrollTop = element.scrollHeight;
                 }
+
+                function resizeImage(base64Str, maxWidth, maxHeight, callback) {
+    var img = new Image();
+    img.src = base64Str;
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      var ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      callback(canvas.toDataURL());
+    };
+  }
             });
         </script>
     </body>
+
+  
+
+  </script>
+</body>
+
 </html>
