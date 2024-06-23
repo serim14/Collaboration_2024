@@ -101,6 +101,11 @@ input[type='text']:focus {
     width: 100%;
 }
 
+.form-control {
+    justify-content: center;
+    align-items: center;
+    height: 2.8rem;
+}
 #chatBox {
     flex: 1;
     display: flex;
@@ -168,7 +173,6 @@ input[type='text']:focus {
 .btn-primary {
     background-color: #0064ff;
     border-color: #0064ff;
-    border-radius: 20px;
 }
 
 .btn-primary:hover {
