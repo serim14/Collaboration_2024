@@ -1,3 +1,4 @@
+// 서버 측
 var app = require('express')();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
@@ -5,7 +6,6 @@ var server_time = require('moment');
 require('moment-timezone');
 server_time.tz.setDefault('Asia/Seoul');
 
-// localhost:3000으로 서버에 접속하면 클라이언트로 chat.html을 전송한다
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/chat.html');
 });
@@ -13,12 +13,12 @@ app.get('/', function (req, res) {
 const express = require('express');
 app.use(express.static('public'));
 
-let messages = [];
+// 각 메시지의 좋아요/싫어요 카운트를 저장할 객체
+let messageReactions = {};
 
-// connection event handler
-// connection이 수립되면 event handler function의 인자로 socket인 들어온다
-io.on('connection', function (socket) {
-    // 접속한 클라이언트의 정보가 수신되면
+io.on('connection', (socket) => {
+    console.log('a user connected');
+
     socket.on('login', function (data) {
         console.log(
             'Client logged-in:\n name:' +
@@ -35,81 +35,67 @@ io.on('connection', function (socket) {
         socket.enter_time = server_time().format('YYYY-MM-DD HH:mm:ss');
 
         // 접속된 모든 클라이언트에게 메시지를 전송한다
-        io.emit('login', { name: socket.name, enter_time: socket.enter_time });
+        io.emit('login', { name: this.name, enter_time: this.enter_time });
     });
 
-    // 클라이언트로부터의 메시지가 수신되면
-    socket.on('chat', function (data) {
+    socket.on('chat', (data) => {
         console.log(
             'Message from %s: %s (%s)',
             socket.name,
             data.msg,
             server_time().format('YYYY-MM-DD HH:mm:ss')
         );
-        var msg = {
-            from: {
-                name: socket.name,
-                userid: socket.userid,
-                msg_time: server_time().format('YYYY-MM-DD HH:mm:ss'),
-            },
-            msg: data.msg,
-        };
-
-        // 메시지를 전송한 클라이언트를 제외한 모든 클라이언트에게 메시지를 전송한다
         socket.broadcast.emit('chat', {
             msg: data.msg,
-            name: msg.from.name,
-            msg_time: msg.from.msg_time,
+            name: socket.name,
+            msg_time: data.msg_time,
+            count: 0, // 채팅 메시지는 서버에서 카운트를 관리
         });
     });
 
-    socket.on('base64', function (data) {
-        console.log('received base64 file from ' + socket.name);
-
-        var msg = {
-            from: {
-                name: socket.name,
-                userid: socket.userid,
-                msg_time: server_time().format('YYYY-MM-DD HH:mm:ss'),
-            },
-            msg: data.base64,
-        };
-
-        // 메시지를 전송한 클라이언트를 제외한 모든 클라이언트에게 메시지를 전송한다
+    socket.on('base64', (data) => {
+        console.log('base64 image received');
         socket.broadcast.emit('base64', {
             msg: data.base64,
-            name: msg.from.name,
-            msg_time: msg.from.msg_time,
+            name: socket.name,
+            msg_time: data.msg_time,
+            count: 0, // 이미지 메시지는 서버에서 카운트를 관리
         });
     });
 
-    // 좋아요 이벤트 처리
-    socket.on('like', function (data) {
-        console.log('Like from %s on message %s', socket.name, data.msg_id);
+    // 서버 사이드
+    socket.on('like', (data) => {
+        console.log('like:', data.msg_id);
+        // 좋아요 처리
+        if (messageReactions[data.msg_id]) {
+            messageReactions[data.msg_id].like++;
+        } else {
+            messageReactions[data.msg_id] = { like: 1, dislike: 0 };
+        }
         io.emit('update', {
             msg_id: data.msg_id,
-            user: socket.name,
             action: 'like',
+            count: messageReactions[data.msg_id].like,
         });
     });
 
-    // 싫어요 이벤트 처리
-    socket.on('dislike', function (data) {
-        console.log('Dislike from %s on message %s', socket.name, data.msg_id);
+    socket.on('dislike', (data) => {
+        console.log('dislike:', data.msg_id);
+        // 싫어요 처리
+        if (messageReactions[data.msg_id]) {
+            messageReactions[data.msg_id].dislike++;
+        } else {
+            messageReactions[data.msg_id] = { like: 0, dislike: 1 };
+        }
         io.emit('update', {
             msg_id: data.msg_id,
-            user: socket.name,
             action: 'dislike',
+            count: messageReactions[data.msg_id].dislike,
         });
     });
 
-    // force client disconnect from server
-    socket.on('forceDisconnect', function () {
-        socket.disconnect();
-    });
-
-    socket.on('disconnect', function () {
-        console.log('user disconnected: ' + socket.name);
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
     });
 });
 

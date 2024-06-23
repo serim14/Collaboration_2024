@@ -107,22 +107,9 @@
                         </div>
                     </form>
                 </div>
-
-                <div class="right_screen">
-                    <div class="container">
-                        <div id="video-container" class="video-container">
-                            <video
-                                id="video"
-                                autoplay
-                                muted
-                                width="90%"
-                                height="100%"
-                            ></video>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
+
         <script>
             $(function () {
                 var socket = io();
@@ -146,11 +133,14 @@
                     updateScroll();
                 });
 
+                // 채팅 메시지 수신 처리
                 socket.on('chat', function (data) {
-                    var uniqueTime = new Date(data.msg_time).getTime();
+                    var msgTime = new Date(data.msg_time);
+
+                    var formattedTime = msgTime.toLocaleString();
                     var msgLine = $('<div class="msgLine">');
                     var msgBox = $(
-                        '<div class="msgBox" id="msg-' + uniqueTime + '">'
+                        '<div class="msgBox" id="msg-' + data.msg_time + '">'
                     );
                     msgBox.append(
                         data.msg +
@@ -159,33 +149,31 @@
                             data.name +
                             '학생)' +
                             ' ' +
-                            data.msg_time +
+                            formattedTime +
                             '</div>'
                     );
                     msgBox.css('display', 'inline-block');
-
                     var reactionButtons = $('<div class="reaction-buttons">');
-                    var likeCount = $('<span class="like-count">0</span>');
+                    var likeCount = $(
+                        '<span class="like-count" id="like-count-' +
+                            data.msg_time +
+                            '">0</span>'
+                    );
                     var likeBtn = $('<span class="like-btn">👍</span>').click(
                         function () {
-                            socket.emit('like', {
-                                msg_id: uniqueTime,
-                                user: data.name,
-                            });
+                            handleReaction2(data.msg_time, 'like');
                         }
                     );
                     var dislikeCount = $(
-                        '<span class="dislike-count">0</span>'
+                        '<span class="dislike-count" id="dislike-count-' +
+                            data.msg_time +
+                            '">0</span>'
                     );
                     var dislikeBtn = $(
                         '<span class="dislike-btn">👎</span>'
                     ).click(function () {
-                        socket.emit('dislike', {
-                            msg_id: uniqueTime,
-                            user: data.name,
-                        });
+                        handleReaction2(data.msg_time, 'dislike');
                     });
-
                     reactionButtons
                         .append(likeCount)
                         .append(likeBtn)
@@ -197,20 +185,20 @@
                     updateScroll();
                 });
 
+                // 이미지 메시지 수신 처리
                 socket.on('base64', function (data) {
-                    var uniqueTime = new Date(data.msg_time).getTime();
-                    var imageContainer = $('#chatContent');
                     var msgLine = $('<div class="msgLine">');
+                    var msgTime = new Date(data.msg_time);
+
+                    var formattedTime = msgTime.toLocaleString();
                     var msgBox = $(
-                        '<div class="msgBox" id="msg-' + uniqueTime + '">'
+                        '<div class="msgBox" id="msg-' + data.msg_time + '">'
                     );
                     msgBox.append(
-                        '<div class="msgBox_from_and_time">' +
-                            '(From. ' +
+                        '<div class="msgBox_from_and_time">(From. ' +
                             data.name +
-                            '학생)' +
-                            ' ' +
-                            data.msg_time +
+                            ' 학생) ' +
+                            formattedTime +
                             '</div>'
                     );
                     var img = $('<img>');
@@ -219,32 +207,29 @@
                         'src',
                         'data:img/' + img_type + ';base64,' + data.msg
                     );
-
                     msgBox.append(img);
                     msgBox.css('display', 'inline-block');
-
                     var reactionButtons = $('<div class="reaction-buttons">');
-                    var likeCount = $('<span class="like-count">0</span>');
+                    var likeCount = $(
+                        '<span class="like-count" id="like-count-' +
+                            data.msg_time +
+                            '">0</span>'
+                    );
                     var likeBtn = $('<span class="like-btn">👍</span>').click(
                         function () {
-                            socket.emit('like', {
-                                msg_id: uniqueTime,
-                                user: data.name,
-                            });
+                            handleReaction2(data.msg_time, 'like');
                         }
                     );
                     var dislikeCount = $(
-                        '<span class="dislike-count">0</span>'
+                        '<span class="dislike-count" id="dislike-count-' +
+                            data.msg_time +
+                            '">0</span>'
                     );
                     var dislikeBtn = $(
                         '<span class="dislike-btn">👎</span>'
                     ).click(function () {
-                        socket.emit('dislike', {
-                            msg_id: uniqueTime,
-                            user: data.name,
-                        });
+                        handleReaction2(data.msg_time, 'dislike');
                     });
-
                     reactionButtons
                         .append(likeCount)
                         .append(likeBtn)
@@ -252,21 +237,47 @@
                         .append(dislikeBtn);
                     msgBox.append(reactionButtons);
                     msgLine.append(msgBox);
-                    imageContainer.append(msgLine);
+                    $('#chatContent').append(msgLine);
                     updateScroll();
                 });
 
+                // 좋아요 및 싫어요 버튼 클릭 처리
+                $(document)
+                    .off('click', '.like-btn')
+                    .on('click', '.like-btn', function () {
+                        var msg_id = $(this)
+                            .closest('.msgBox')
+                            .attr('id')
+                            .replace('msg-', '');
+                        var action = 'like';
+                        socket.emit(action, { msg_id: msg_id, action: action });
+                    });
+
+                $(document)
+                    .off('click', '.dislike-btn')
+                    .on('click', '.dislike-btn', function () {
+                        var msg_id = $(this)
+                            .closest('.msgBox')
+                            .attr('id')
+                            .replace('msg-', '');
+                        var action = 'dislike';
+                        console.log(
+                            'disLike button clicked for message ID:1',
+                            msg_id
+                        );
+                        socket.emit(action, { msg_id: msg_id, action: action });
+                    });
+
+                // 서버에서 좋아요 및 싫어요 업데이트 처리
                 socket.on('update', function (data) {
-                    var msgBox = $('#msg-' + data.msg_id);
                     if (data.action === 'like') {
-                        var likeCount = msgBox.find('.like-count');
-                        likeCount.text(parseInt(likeCount.text()) + 1);
+                        $('#like-count-' + data.msg_id).text(data.count);
                     } else if (data.action === 'dislike') {
-                        var dislikeCount = msgBox.find('.dislike-count');
-                        dislikeCount.text(parseInt(dislikeCount.text()) + 1);
+                        $('#dislike-count-' + data.msg_id).text(data.count);
                     }
                 });
 
+                // 이미지 업로드 처리
                 $('.form_image').submit(function (e) {
                     e.preventDefault();
                     var fileInput = $('#fileInput');
@@ -307,7 +318,9 @@
                                     '<div class="reaction-buttons">'
                                 );
                                 var likeCount = $(
-                                    '<span class="like-count">0</span>'
+                                    '<span class="like-count" id="like-count-' +
+                                        uniqueTime +
+                                        '">0</span>'
                                 );
                                 var likeBtn = $(
                                     '<span class="like-btn">👍</span>'
@@ -317,7 +330,9 @@
                                     });
                                 });
                                 var dislikeCount = $(
-                                    '<span class="dislike-count">0</span>'
+                                    '<span class="dislike-count" id="dislike-count-' +
+                                        uniqueTime +
+                                        '">0</span>'
                                 );
                                 var dislikeBtn = $(
                                     '<span class="dislike-btn">👎</span>'
@@ -344,19 +359,16 @@
                     };
                     reader.readAsDataURL(file);
                 });
-
-                $('#fileInput').change(function () {
-                    var file = this.files[0];
-                    var reader = new FileReader();
-                    reader.onload = function (e) {
-                        $('#imagePreview').attr('src', e.target.result).show();
-                    };
-                    reader.readAsDataURL(file);
-                });
-
+                // 채팅 메시지 전송 처리
                 $('.form_text').submit(function (e) {
                     e.preventDefault();
                     var $myChat = $('#myChat');
+                    var message = $myChat.val().trim();
+                    if (message === '') {
+                        // 메시지가 비어 있으면 아무 작업도 수행하지 않음
+                        return;
+                    }
+
                     var uniqueTime = new Date().getTime();
                     socket.emit('chat', {
                         msg: $myChat.val(),
@@ -370,38 +382,47 @@
                     );
                     msgBox.append($myChat.val());
                     msgBox.css('display', 'inline-block');
-
                     var reactionButtons = $('<div class="reaction-buttons">');
-                    var likeCount = $('<span class="like-count">0</span>');
+                    var likeCount = $(
+                        '<span class="like-count" id="like-count-' +
+                            uniqueTime +
+                            '">0</span>'
+                    );
                     var likeBtn = $('<span class="like-btn">👍</span>').click(
                         function () {
-                            socket.emit('like', {
-                                msg_id: uniqueTime,
-                            });
+                            handleReaction(uniqueTime, 'like');
                         }
                     );
                     var dislikeCount = $(
-                        '<span class="dislike-count">0</span>'
+                        '<span class="dislike-count" id="dislike-count-' +
+                            uniqueTime +
+                            '">0</span>'
                     );
                     var dislikeBtn = $(
                         '<span class="dislike-btn">👎</span>'
                     ).click(function () {
-                        socket.emit('dislike', {
-                            msg_id: uniqueTime,
-                        });
+                        handleReaction(uniqueTime, 'dislike');
                     });
-
                     reactionButtons
                         .append(likeCount)
                         .append(likeBtn)
                         .append(dislikeCount)
                         .append(dislikeBtn);
                     msgBox.append(reactionButtons);
-                    msgLine.css('text-align', 'right');
                     msgLine.append(msgBox);
                     $('#chatContent').append(msgLine);
                     $myChat.val('');
                     updateScroll();
+                });
+
+                // 이미지 미리보기 처리
+                $('#fileInput').change(function () {
+                    var file = this.files[0];
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#imagePreview').attr('src', e.target.result).show();
+                    };
+                    reader.readAsDataURL(file);
                 });
 
                 function makeRandomName() {
@@ -459,6 +480,17 @@
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         callback(canvas.toDataURL());
                     };
+                }
+
+                // 좋아요 및 싫어요 처리 함수
+                function handleReaction(msg_id, action) {
+                    socket.emit(action, { msg_id: msg_id, action: action });
+
+                    console.log('disLike button clicked for message ID:2');
+                }
+                function handleReaction2(msg_id, action) {
+                    //socket.emit(action, { msg_id: msg_id, action: action });
+                    console.log('disLike button clicked for message ID:2');
                 }
             });
         </script>
