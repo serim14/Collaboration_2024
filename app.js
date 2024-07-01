@@ -5,6 +5,7 @@ var io = require('socket.io')(server);
 var server_time = require('moment');
 require('moment-timezone');
 server_time.tz.setDefault('Asia/Seoul');
+const ytdl = require('ytdl-core'); // 추가된 부분
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/chat.html');
@@ -38,18 +39,40 @@ io.on('connection', (socket) => {
         io.emit('login', { name: this.name, enter_time: this.enter_time });
     });
 
-    socket.on('chat', (data) => {
+    
+    socket.on('chat', async (data) => { // async 추가
         console.log(
             'Message from %s: %s (%s)',
             socket.name,
             data.msg,
             server_time().format('YYYY-MM-DD HH:mm:ss')
         );
+
+        // 유튜브 썸네일 url 저장
+        let thumbnailUrl = '';
+
+        if (isYouTubeLink(data.msg)) {
+            try {
+                const videoId = getVideoIdFromUrl(data.msg);
+                if (videoId) {
+                    const info = await ytdl.getInfo(videoId);
+                    thumbnailUrl = info.videoDetails.thumbnails.pop().url;
+                    console.log("thumbnailUrl:");
+                    console.log(thumbnailUrl);
+                } else {
+                    console.error('No video id found:', data.msg);
+                }
+            } catch (error) {
+                console.error('Error fetching YouTube video information:', error.message);
+            }
+        }
+
         socket.broadcast.emit('chat', {
             msg: data.msg,
             name: socket.name,
             msg_time: data.msg_time,
             count: 0, // 채팅 메시지는 서버에서 카운트를 관리
+            thumbnail: thumbnailUrl // 썸네일 URL 추가
         });
     });
 
@@ -102,3 +125,23 @@ io.on('connection', (socket) => {
 server.listen(3000, function () {
     console.log('Socket IO server listening on port 3000');
 });
+
+// 유튜브 링크에서 비디오id를 추출해내는 함수
+function getVideoIdFromUrl(url) {
+    let videoId = '';
+    if (url.includes('youtube.com')) {
+        videoId = url.split('v=')[1];
+        const ampersandPosition = videoId.indexOf('&');
+        if (ampersandPosition !== -1) {
+            videoId = videoId.substring(0, ampersandPosition);
+        }
+    } else if (url.includes('youtu.be')) {
+        videoId = url.split('/').pop();
+    }
+    return videoId;
+}
+
+// 링크가 유튜브 링크인지 판독
+function isYouTubeLink(url) {
+    return url.includes('youtube.com') || url.includes('youtu.be');
+}

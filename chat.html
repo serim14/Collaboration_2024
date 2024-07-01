@@ -180,6 +180,20 @@
                         .append(dislikeCount)
                         .append(dislikeBtn);
                     msgBox.append(reactionButtons);
+
+                    // 유튜브 링크일 경우 썸네일 이미지 추가
+                    if (data.thumbnail) {
+                        var thumbnailImg = $('<img>').attr('src', data.thumbnail).css({
+                            width: '500px',
+                            height: 'auto',
+                            display: 'block',
+                            margin: '10px auto'
+                        });
+                        msgBox.append(thumbnailImg);
+                    }
+
+                    msgBox.css('display', 'inline-block');
+
                     msgLine.append(msgBox);
                     $('#chatContent').append(msgLine);
                     updateScroll();
