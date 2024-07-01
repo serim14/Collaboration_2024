@@ -293,17 +293,18 @@ input[type='text']:focus {
     background-color: #0064ff;
     color: #fff;
     text-align: left; /* Text inside the box should be left aligned */
+}
+
+.rightAlign {
     margin-left: auto;
     margin-right: 15px;
 }
 
-.otherComment {
-    background-color: #f1f1f1;
-    color: #000;
-    text-align: left;
+.leftAlign {
     margin-left: 15px;
     margin-right: auto;
 }
+
 
 
 
