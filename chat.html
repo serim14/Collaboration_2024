@@ -86,41 +86,56 @@
                 updateScroll();
             });
 
+            // 채팅 메시지 수신 처리
             socket.on('chat', function (data) {
                 var msgTime = new Date(data.msg_time);
+
                 var formattedTime = msgTime.toLocaleString();
                 var msgLine = $('<div class="msgLine">');
-                var msgBox = $('<div class="msgBox" id="msg-' + data.msg_time + '">');
-                msgBox.append(data.msg + '<div class="msgBox_from_and_time">' + '(From. ' + data.name + ' 학생)' + ' ' + formattedTime + '</div>');
+                var msgBox = $(
+                    '<div class="msgBox" id="msg-' + data.msg_time + '">'
+                );
+                msgBox.append(
+                    data.msg +
+                        '<div class="msgBox_from_and_time">' +
+                        '(From. ' +
+                        data.name +
+                        '학생)' +
+                        ' ' +
+                        formattedTime +
+                        '</div>'
+                );
                 msgBox.css('display', 'inline-block');
                 var reactionButtons = $('<div class="reaction-buttons">');
-                var likeCount = $('<span class="like-count" id="like-count-' + data.msg_time + '">0</span>');
-                var likeBtn = $('<span class="like-btn">👍</span>').click(function () {
-                    handleReaction(data.msg_time, 'like');
-                });
-                var dislikeCount = $('<span class="dislike-count" id="dislike-count-' + data.msg_time + '">0</span>');
-                var dislikeBtn = $('<span class="dislike-btn">👎</span>').click(function () {
-                    handleReaction(data.msg_time, 'dislike');
+                var likeCount = $(
+                    '<span class="like-count" id="like-count-' +
+                        data.msg_time +
+                        '">0</span>'
+                );
+                var likeBtn = $('<span class="like-btn">👍</span>').click(
+                    function () {
+                        handleReaction2(data.msg_time, 'like');
+                    }
+                );
+                var dislikeCount = $(
+                    '<span class="dislike-count" id="dislike-count-' +
+                        data.msg_time +
+                        '">0</span>'
+                );
+                var dislikeBtn = $(
+                    '<span class="dislike-btn">👎</span>'
+                ).click(function () {
+                    handleReaction2(data.msg_time, 'dislike');
                 });
                 var commentImg = $('<img src="commentImg.png" class="commentImg" alt="comment">').click(function () {
                     toggleReplyMode(data.msg_time, data.name);
-                });
-                reactionButtons.append(likeCount).append(likeBtn).append(dislikeCount).append(dislikeBtn).append(commentImg);
+                reactionButtons
+                    .append(likeCount)
+                    .append(likeBtn)
+                    .append(dislikeCount)
+                    .append(dislikeBtn)
+                    .append(commentImg);
                 msgBox.append(reactionButtons);
-
-                    // 유튜브 링크일 경우 썸네일 이미지 추가
-                    if (data.thumbnail) {
-                        var thumbnailImg = $('<img>').attr('src', data.thumbnail).css({
-                            width: '500px',
-                            height: 'auto',
-                            display: 'block',
-                            margin: '10px auto'
-                        });
-                        msgBox.append(thumbnailImg);
-                    }
-
-                    msgBox.css('display', 'inline-block');
-
                 msgLine.append(msgBox);
                 $('#chatContent').append(msgLine);
                 $('#chatContent').append('<div class="replyContainer" id="reply-container-' + data.msg_time + '"></div>'); // Add reply container
@@ -394,6 +409,8 @@
                 });
             }
         });
+    })
+  
     </script>
 </body>
 </html>
