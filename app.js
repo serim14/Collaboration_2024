@@ -1,4 +1,3 @@
-// 서버 측
 var app = require('express')();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
@@ -14,8 +13,8 @@ app.get('/', function (req, res) {
 const express = require('express');
 app.use(express.static('public'));
 
-// 각 메시지의 좋아요/싫어요 카운트를 저장할 객체
 let messageReactions = {};
+let comments = {};
 
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -30,12 +29,10 @@ io.on('connection', (socket) => {
                 server_time().format('YYYY-MM-DD HH:mm:ss')
         );
 
-        // socket에 클라이언트 정보를 저장한다
         socket.name = data.name;
         socket.userid = data.userid;
         socket.enter_time = server_time().format('YYYY-MM-DD HH:mm:ss');
 
-        // 접속된 모든 클라이언트에게 메시지를 전송한다
         io.emit('login', { name: this.name, enter_time: this.enter_time });
     });
 
@@ -72,7 +69,7 @@ io.on('connection', (socket) => {
             name: socket.name,
             msg_time: data.msg_time,
             count: 0, // 채팅 메시지는 서버에서 카운트를 관리
-            thumbnail: thumbnailUrl // 썸네일 URL 추가
+            thumbnail: thumbnailUrl, // 썸네일 URL 추가
         });
     });
 
@@ -82,14 +79,12 @@ io.on('connection', (socket) => {
             msg: data.base64,
             name: socket.name,
             msg_time: data.msg_time,
-            count: 0, // 이미지 메시지는 서버에서 카운트를 관리
+            count: 0,
         });
     });
 
-    // 서버 사이드
     socket.on('like', (data) => {
         console.log('like:', data.msg_id);
-        // 좋아요 처리
         if (messageReactions[data.msg_id]) {
             messageReactions[data.msg_id].like++;
         } else {
@@ -104,7 +99,6 @@ io.on('connection', (socket) => {
 
     socket.on('dislike', (data) => {
         console.log('dislike:', data.msg_id);
-        // 싫어요 처리
         if (messageReactions[data.msg_id]) {
             messageReactions[data.msg_id].dislike++;
         } else {
@@ -115,6 +109,14 @@ io.on('connection', (socket) => {
             action: 'dislike',
             count: messageReactions[data.msg_id].dislike,
         });
+    });
+
+    socket.on('comment', (data) => {
+        if (!comments[data.msg_id]) {
+            comments[data.msg_id] = [];
+        }
+        comments[data.msg_id].push({ name: socket.name, comment: data.comment });
+        io.emit('newComment', { msg_id: data.msg_id, name: socket.name, comment: data.comment });
     });
 
     socket.on('disconnect', () => {
